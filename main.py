@@ -40,29 +40,40 @@ def verify():
 @app.route('/webhook', methods=['POST'])
 def webhook():
     data = request.get_json()
+    print("📨 Raw incoming message:", json.dumps(data, indent=2))  # Debug print
+
     for entry in data.get('entry', []):
         for messaging in entry.get('messaging', []):
             sender_id = messaging['sender']['id']
             message = messaging.get('message', {}).get('text', '').strip()
+            print(f"📥 Message from user: {message}")  # Debug print
 
             if message.lower().startswith("check "):
                 username = message[6:].strip()
+                print(f"🔍 Checking Roblox user: {username}")
+
                 user_id = get_user_id(username)
+                print(f"🆔 Resolved User ID: {user_id}")
+
                 if not user_id:
                     send_message(sender_id, f"❌ Could not find a Roblox user named `{username}`.")
-                else:
-                    responses = []
-                    for group in GROUPS:
-                        status = is_user_eligible(user_id, group["ID"])
-                        if status == "Eligible":
-                            responses.append(f"✅ `{username}` is eligible for payouts on [{group['NAME']}]({group['URL']})")
-                        elif status == "PayoutRestricted":
-                            responses.append(f"❌ `{username}` is not yet eligible for payouts on [{group['NAME']}]({group['URL']})")
-                        elif status == "NotInGroup":
-                            responses.append(f"❌ `{username}` is not a member of [{group['NAME']}]({group['URL']})")
-                        else:
-                            responses.append(f"⚠ API error while checking [{group['NAME']}]")
-                    send_message(sender_id, "\n".join(responses))
+                    return "ok", 200
+
+                responses = []
+                for group in GROUPS:
+                    status = is_user_eligible(user_id, group["ID"])
+                    print(f"🔎 Group {group['NAME']} status: {status}")
+                    if status == "Eligible":
+                        responses.append(f"✅ `{username}` is eligible for payouts on {group['NAME']}")
+                    elif status == "PayoutRestricted":
+                        responses.append(f"❌ `{username}` is not yet eligible for payouts on {group['NAME']}")
+                    elif status == "NotInGroup":
+                        responses.append(f"❌ `{username}` is not a member of {group['NAME']}")
+                    else:
+                        responses.append(f"⚠ API error checking {group['NAME']}")
+
+                send_message(sender_id, "\n".join(responses))
+
             else:
                 send_message(sender_id, "📝 To check Roblox payout eligibility, type:\n`check <username>`")
 
