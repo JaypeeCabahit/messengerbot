@@ -33,7 +33,7 @@ GROUPS = [
 @app.route('/webhook', methods=['GET'])
 def verify():
     if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.verify_token") == VERIFY_TOKEN:
-        return request.args.get("hub.challenge")
+        return request.args.get("hub.challenge"), 200
     return "Verification failed", 403
 
 # Handle incoming messages
