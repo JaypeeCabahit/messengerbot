@@ -100,11 +100,17 @@ def is_user_eligible(user_id, group_id):
         "Cookie": f".ROBLOSECURITY={ROBLO_SECURITY_COOKIE}",
         "Accept": "application/json"
     }
+
     try:
         res = requests.get(url, headers=headers, timeout=10)
+        print(f"📡 Roblox API [{group_id}] Response Code:", res.status_code)
+        print("📦 Response Text:", res.text)
+
+        res.raise_for_status()
         data = res.json()
         return data.get("usersGroupPayoutEligibility", {}).get(str(user_id), "Unknown")
-    except:
+    except Exception as e:
+        print("❌ Roblox API error:", e)
         return "APIError"
 
 # Helper to send message
